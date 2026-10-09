@@ -1,3 +1,5 @@
+library;
+
 import 'dart:async';
 import 'dart:math';
 
@@ -11,7 +13,6 @@ import 'dart:math';
 /// colors × 4 hexes shuffled into `colors + emptyTubes` tubes, round-robin.
 /// A deal that is instantly won is re-dealt; the engine always starts with
 /// at least one legal pour (guaranteed by the empty tubes).
-library;
 
 const hexCap = 4;
 const hexLevels = 50;
@@ -390,7 +391,6 @@ class HexaEngine {
 
   /// How many hexes of the last pour still need to move back.
   int _pourBackRemaining(HexMove mv) {
-    final src = tubes[mv.to];
     final dst = tubes[mv.from];
     // Hexes that belong to this pour: count matching top-run in dst that
     // came from the pour. Simpler robust rule: the pour moved mv.count
