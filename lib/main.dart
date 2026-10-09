@@ -1,26 +1,87 @@
 import 'package:flutter/material.dart';
-import 'package:wajiha_game_core/wajiha_game_core.dart';
-import 'game_screen.dart';
+import 'package:flutter/services.dart';
+import 'screens/splash_screen.dart';
+import 'services/audio_service.dart';
+import 'services/settings_service.dart';
+import 'theme/hexa_themes.dart';
+import 'theme/hexa_ui.dart';
 
-void main() => runApp(const HexaSortApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  final settings = HexaSettings();
+  await settings.load();
+  final audio = HexaAudio();
+  audio.configure(
+    musicOn: settings.musicOn,
+    sfxOn: settings.sfxOn,
+    volume: settings.volume,
+  );
+  runApp(HexaSortApp(settings: settings, audio: audio));
+}
 
-class HexaSortApp extends StatelessWidget {
-  const HexaSortApp({super.key});
+class HexaSortApp extends StatefulWidget {
+  final HexaSettings settings;
+  final HexaAudio audio;
+  const HexaSortApp({super.key, required this.settings, required this.audio});
+
+  @override
+  State<HexaSortApp> createState() => _HexaSortAppState();
+}
+
+class _HexaSortAppState extends State<HexaSortApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    widget.audio.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pause (not stop) on interruption so music resumes exactly where it
+    // left off; game screens additionally freeze their engines.
+    if (state == AppLifecycleState.paused) {
+      widget.audio.onAppPaused();
+    } else if (state == AppLifecycleState.resumed) {
+      widget.audio.onAppResumed();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GameShell(
-      variant: ShellVariant.comicBurst,
-      title: 'Hexa Sort',
-      tagline: 'Pour the colors into their own hex tubes — oddly satisfying',
-      emoji: '⬡',
-      slug: 'hexasort',
-      howToPlay:
-          '• Tap a hex tube to pick it up, then tap another tube to pour.\n• You can only pour onto the same color (or an empty tube).\n• Tubes hold 4 hexes. Undo is your best friend.\n• Win when every tube holds one color. 12 levels of zen!',
-      playerOptions: const [1],
-      supportsBots: false,
-      gameBuilder: (ctx, players, cb) =>
-          HexaSortScreen(players: players, callbacks: cb),
+    return ListenableBuilder(
+      listenable: widget.settings,
+      builder: (_, _) {
+        final theme = HexaThemes.byId(widget.settings.themeId,
+            custom: widget.settings.customTheme);
+        return MaterialApp(
+          title: 'Hexa Sort',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            useMaterial3: true,
+            scaffoldBackgroundColor: theme.bgDark,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: theme.accent,
+              brightness: Brightness.dark,
+            ),
+            textTheme: Typography.whiteMountainView,
+          ),
+          home: SplashScreen(audio: widget.audio, settings: widget.settings),
+          builder: (context, child) =>
+              WorkshopBackdrop(theme: theme, child: child ?? const SizedBox()),
+        );
+      },
     );
   }
 }
