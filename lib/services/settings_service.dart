@@ -83,7 +83,7 @@ class HexaSettings extends ChangeNotifier {
   String themeId = 'honey';
   String tileStyleId = 'gloss';
   int boardAccent = 0;
-  bool isPro = false;
+  bool isPro = true; // everything unlocked — no Pro version
   int gamesPlayed = 0;
   int levelsCompleted = 0;
   int reviewPrompts = 0;
@@ -160,7 +160,7 @@ class HexaSettings extends ChangeNotifier {
     themeId = p.getString(_kTheme) ?? 'honey';
     tileStyleId = p.getString(_kTileStyle) ?? 'gloss';
     boardAccent = (p.getInt(_kAccent) ?? 0).clamp(0, 2);
-    isPro = p.getBool(_kIsPro) ?? false;
+    isPro = true; // everything unlocked
     gamesPlayed = p.getInt(_kGames) ?? 0;
     levelsCompleted = p.getInt(_kLevelsDone) ?? 0;
     reviewPrompts = p.getInt(_kReviewCount) ?? 0;
