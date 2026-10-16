@@ -4,6 +4,7 @@ import '../services/settings_service.dart';
 import '../theme/hexa_themes.dart';
 import '../theme/hexa_ui.dart';
 import '../widgets/player_name_field.dart';
+import '../transfer/transfer_ui.dart';
 
 /// Settings: music/SFX toggles, volume, profile rename, progress reset,
 /// credits.
@@ -58,6 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
               child: Column(
                 children: [
+              TransferSaveTile(gameSlug: 'hexasort'),
                   HexaCard(
                     theme: t,
                     child: Column(
