@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
 import '../engine/hexasort_engine.dart';
@@ -329,7 +330,9 @@ class _GameScreenState extends State<GameScreen>
           _iconBtn(t, Icons.lightbulb_outline, () {
             if (_engine.hintsLeft <= 0 && !widget.settings.isPro) {
               widget.audio.invalid();
-              _snack('Out of hints — PRO gets unlimited 💡');
+              _snack(defaultTargetPlatform == TargetPlatform.iOS
+                  ? 'Out of hints for now 💡'
+                  : 'Out of hints — PRO gets unlimited 💡');
               return;
             }
             _engine.hint();
@@ -405,7 +408,8 @@ class _GameScreenState extends State<GameScreen>
           Text(widget.settings.playerName,
               style: HexaUi.muted(12, theme: t)),
           const SizedBox(width: 14),
-          if (widget.settings.isPro)
+          if (defaultTargetPlatform != TargetPlatform.iOS &&
+              widget.settings.isPro)
             Text('⬡ PRO',
                 style: TextStyle(
                     color: t.accentLight,

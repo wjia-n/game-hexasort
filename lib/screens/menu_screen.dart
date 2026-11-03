@@ -198,7 +198,7 @@ class _MenuScreenState extends State<MenuScreen> {
           style: HexaUi.muted(13, theme: t),
           textAlign: TextAlign.center,
         ),
-        if (s.isPro)
+        if (defaultTargetPlatform != TargetPlatform.iOS && s.isPro)
           Container(
             margin: const EdgeInsets.only(top: 8),
             padding:
@@ -254,7 +254,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       '• Tap a tube to lift it, then tap another tube to pour.\n'
                       '• You can only pour onto the same color (or an empty tube).\n'
                       '• Tubes hold 4 hexes. Pouring a full tube of one color into an empty tube is a wasted move — not allowed.\n'
-                      '• Undo replays your last pour backwards. Hints are limited unless you are PRO.\n'
+                      '• Undo replays your last pour backwards. ${defaultTargetPlatform == TargetPlatform.iOS ? 'Hints are limited each day.' : 'Hints are limited unless you are PRO.'}\n'
                       '• Win when every tube holds a single color. 50 levels per difficulty!',
                       style: HexaUi.body(14, theme: t),
                     ),
@@ -309,7 +309,9 @@ class _MenuScreenState extends State<MenuScreen> {
               HexaDifficulty.easy => 'Fewer colors, 3 spare tubes. Gentle.',
               HexaDifficulty.medium => 'The classic balance. 2 spare tubes.',
               HexaDifficulty.hard =>
-                'Up to 8 colors, 2 spare tubes. PRO only.',
+                defaultTargetPlatform == TargetPlatform.iOS
+                    ? 'Up to 8 colors, 2 spare tubes. The toughest test.'
+                    : 'Up to 8 colors, 2 spare tubes. PRO only.',
             },
             style: HexaUi.muted(12, theme: t),
           ),
@@ -349,7 +351,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     fontWeight: FontWeight.w800,
                     fontSize: 14)),
             if (locked)
-              const Text('🔒 PRO', style: TextStyle(fontSize: 10)),
+              Text(defaultTargetPlatform == TargetPlatform.iOS ? '🔒' : '🔒 PRO', style: TextStyle(fontSize: 10)),
           ],
         ),
       ),
@@ -788,7 +790,7 @@ class _MenuScreenState extends State<MenuScreen> {
           },
         ),
         HexaButton(
-          label: s.isPro ? 'PRO ✓' : defaultTargetPlatform == TargetPlatform.iOS ? '⭐ Gold Star' : 'Go PRO',
+          label: defaultTargetPlatform == TargetPlatform.iOS ? '⭐ Gold Star' : (s.isPro ? 'PRO ✓' : 'Go PRO'),
           icon: Icons.workspace_premium,
           theme: t,
           small: true,
