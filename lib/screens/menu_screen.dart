@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:share_plus/share_plus.dart';
@@ -787,7 +788,7 @@ class _MenuScreenState extends State<MenuScreen> {
           },
         ),
         HexaButton(
-          label: s.isPro ? 'PRO ✓' : 'Go PRO',
+          label: s.isPro ? 'PRO ✓' : defaultTargetPlatform == TargetPlatform.iOS ? '⭐ Gold Star' : 'Go PRO',
           icon: Icons.workspace_premium,
           theme: t,
           small: true,

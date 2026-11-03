@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Real Play Billing tip jar for Hexa Sort: Tip jar (all content is free and unlocked).
 ///
@@ -15,7 +16,12 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 class HexaStore {
   static const coffeeId = 'hexasortcoffee';
   static const chocolateId = 'hexasortchocolate';
+  static const starId = 'hexasortstar';
   static const productIds = {coffeeId, chocolateId};
+  /// Platform-gated product set: iOS gets only the Gold Star
+  /// non-consumable; Android keeps coffee + chocolate. Pure function.
+  static Set<String> productIdsFor(TargetPlatform p) =>
+      p == TargetPlatform.iOS ? {starId} : {coffeeId, chocolateId};
   ProductDetails? get proProduct => null; // Pro removed — everything is free
 
   InAppPurchase? _iap; // lazy: InAppPurchase has no web implementation
@@ -35,6 +41,10 @@ class HexaStore {
 
   ProductDetails? get coffeeProduct => _byId(coffeeId);
   ProductDetails? get chocolateProduct => _byId(chocolateId);
+  ProductDetails? get starProduct => _byId(starId);
+  bool get isIOS => defaultTargetPlatform == TargetPlatform.iOS;
+  /// Gold Star ownership (iOS only, non-consumable, persisted).
+  final ValueNotifier<bool> starOwned = ValueNotifier(false);
 
   ProductDetails? _byId(String id) {
     for (final p in products) {
@@ -64,7 +74,7 @@ class HexaStore {
         onError: (_) {},
         cancelOnError: false,
       );
-      final resp = await _iap!.queryProductDetails(productIds);
+      final resp = await _iap!.queryProductDetails(productIdsFor(defaultTargetPlatform));
       if (resp.error != null) {
         error = 'Could not reach the store';
         return;
@@ -74,17 +84,36 @@ class HexaStore {
       // whatever IS queryable is buyable. Fully empty = pre-launch state.
       storeReady = products.isNotEmpty;
       if (!storeReady) error = 'Available after store setup';
+      if (isIOS) await _loadStarOwned();
     } catch (_) {
       available = false;
       error = 'Store error';
     }
   }
 
+  Future<void> _loadStarOwned() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      starOwned.value = prefs.getBool('gold_star_owned') ?? false;
+    } catch (_) {}
+  }
+
+  Future<void> _persistStarOwned() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('gold_star_owned', true);
+    } catch (_) {}
+  }
+
   void _onPurchases(List<PurchaseDetails> list) {
     for (final p in list) {
       if (p.status == PurchaseStatus.purchased ||
           p.status == PurchaseStatus.restored) {
-        if (p.productID == chocolateId) {
+        if (p.productID == starId) {
+          starOwned.value = true;
+          lastThanks.value = 'Thank you — you have the Gold Star! \u2b50';
+          _persistStarOwned();
+        } else if (p.productID == chocolateId) {
           lastThanks.value = 'Thank you for the chocolate!';
         } else if (p.productID == coffeeId) {
           lastThanks.value = 'Thank you for the coffee!';
@@ -113,6 +142,21 @@ class HexaStore {
     purchaseInProgress.value = true;
     try {
       await _iap!.buyConsumable(
+        purchaseParam: PurchaseParam(productDetails: product),
+      );
+    } catch (_) {
+      purchaseInProgress.value = false;
+      purchaseError.value = 'Purchase failed — please try again.';
+    }
+  }
+
+  /// iOS Gold Star: NON-consumable. Never consumed; acknowledged via
+  /// completePurchase in _onPurchases. Game stays fully unlocked.
+  Future<void> buyStar(ProductDetails product) async {
+    purchaseError.value = null;
+    purchaseInProgress.value = true;
+    try {
+      await _iap!.buyNonConsumable(
         purchaseParam: PurchaseParam(productDetails: product),
       );
     } catch (_) {
